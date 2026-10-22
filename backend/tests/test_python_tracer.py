@@ -16,9 +16,13 @@ def line_steps(trace, line):
 def test_loop_captures_line_events_with_locals():
     trace = trace_python("total = 0\nfor i in range(3):\n    total += i\n", room_id="T1")
     assert trace.result.status == "ok"
+    # "line" steps capture pre-execution state; the module "return" step
+    # captures the final state.
     i_values = [s.locals["i"] for s in line_steps(trace, 3)]
     assert i_values == [0, 1, 2]
-    assert line_steps(trace, 3)[-1].locals["total"] == 3
+    assert line_steps(trace, 3)[-1].locals["total"] == 1
+    assert trace.steps[-1].event == "return"
+    assert trace.steps[-1].locals["total"] == 3
 
 
 def test_recursion_grows_stack():
@@ -46,9 +50,11 @@ def test_syntax_error_reports_error_without_steps():
 def test_mutation_visible_in_snapshots():
     trace = trace_python("items = []\nitems.append(1)\nitems.append(2)\n", room_id="T1")
     assert trace.result.status == "ok"
-    last = line_steps(trace, 3)[-1]
-    assert last.locals["items"]["type"] == "list"
-    assert last.locals["items"]["length"] == 2
+    assert line_steps(trace, 3)[-1].locals["items"]["length"] == 1
+    final = trace.steps[-1]
+    assert final.event == "return"
+    assert final.locals["items"]["type"] == "list"
+    assert final.locals["items"]["length"] == 2
 
 
 def test_infinite_loop_truncates_honestly():
@@ -61,8 +67,10 @@ def test_infinite_loop_truncates_honestly():
 def test_stdout_captured_per_step():
     trace = trace_python('print("hello")\nprint("world")\n', room_id="T1")
     assert trace.result.status == "ok"
+    assert line_steps(trace, 1)[-1].stdout_so_far == ""
+    assert line_steps(trace, 2)[-1].stdout_so_far == "hello\n"
+    assert trace.steps[-1].event == "return"
     assert trace.steps[-1].stdout_so_far == "hello\nworld\n"
-    assert line_steps(trace, 1)[-1].stdout_so_far == "hello\n"
 
 
 def test_steps_only_reference_user_code_lines():
