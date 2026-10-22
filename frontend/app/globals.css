@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Design tokens land on Day 4 with the visualizer. This file holds the
+   Tailwind import and the two typefaces until then. */
+
+body {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+code,
+pre,
+.font-mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
