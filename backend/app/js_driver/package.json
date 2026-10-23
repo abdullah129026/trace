@@ -1,0 +1,1 @@
+{"dependencies":{"acorn":"8.19.0"},"description":"One-shot JavaScript tracer for the Trace sandbox. Spawned by app/sandbox.py; never imported anywhere else.","license":"UNLICENSED","name":"trace-js-driver","private":true,"version":"1.0.0"}
