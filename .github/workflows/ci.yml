@@ -13,8 +13,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install dependencies
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: backend/app/js_driver/package-lock.json
+      - name: Install Python dependencies
         run: pip install -r backend/requirements-dev.txt
+      - name: Install JS tracer dependencies
+        run: npm ci
+        working-directory: backend/app/js_driver
       - name: Run tests
         run: python -m pytest backend/tests/ -q
 
