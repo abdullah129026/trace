@@ -38,3 +38,50 @@ TRACE_STORE_CAP = 64
 # Room code format: 6 chars, unambiguous alphabet (no 0/O, 1/I/l).
 ROOM_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 ROOM_CODE_LENGTH = 6
+
+# Sandbox subprocess caps (enforced by app/sandbox.py, never in-process).
+# The child gets a scrubbed env, a read-only temp workdir, no network, and
+# these rlimits; the wall timeout kills it from the parent.
+SANDBOX_CPU_SECONDS = 8
+SANDBOX_MEMORY_BYTES = 256 * 1024 * 1024
+SANDBOX_FILE_BYTES = 1 * 1024 * 1024
+
+# Node's V8 reserves ~1.5 GB of *virtual* address space just to start, so
+# the address-space rlimit has to be generous for javascript runs. The real
+# memory bound there is the V8 heap cap passed as --max-old-space-size.
+SANDBOX_NODE_MEMORY_BYTES = 2 * 1024 * 1024 * 1024
+SANDBOX_NODE_HEAP_MB = 384
+
+# Stdlib modules user code may import inside the sandbox. Everything else
+# (os, sys, socket, subprocess, pathlib, ...) raises ImportError. This is
+# the list that makes "no network, no filesystem" actually true; the audit
+# hook in the sandbox driver is the second layer, not a replacement.
+SANDBOX_IMPORT_ALLOWLIST = frozenset(
+    {
+        "math",
+        "random",
+        "functools",
+        "itertools",
+        "collections",
+        "re",
+        "json",
+        "string",
+        "statistics",
+        "datetime",
+        "decimal",
+        "fractions",
+        "heapq",
+        "bisect",
+        "operator",
+        "copy",
+        "unicodedata",
+        "numbers",
+        "enum",
+        "dataclasses",
+        "typing",
+    }
+)
+
+# /execute rate limit: requests per IP per sliding window (seconds).
+RATE_LIMIT_EXECUTE_PER_MINUTE = 20
+RATE_LIMIT_WINDOW_SECONDS = 60

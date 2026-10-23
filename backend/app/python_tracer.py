@@ -14,20 +14,49 @@ is NOT this module's job. Day 2's runner calls trace_python() inside the
 sandbox. Never call this on untrusted code in the API process.
 """
 
+import builtins
 import io
 import sys
 from contextlib import redirect_stdout
 from types import FrameType
 from typing import Any
 
-from .config import MAX_SNAPSHOT_CHARS, MAX_STACK_FRAMES, MAX_STDOUT_CHARS, MAX_TRACE_STEPS
+from .config import (
+    MAX_SNAPSHOT_CHARS,
+    MAX_STACK_FRAMES,
+    MAX_STDOUT_CHARS,
+    MAX_TRACE_STEPS,
+    SANDBOX_IMPORT_ALLOWLIST,
+)
 from .trace_schema import Trace, TraceResult, TraceStep, snapshot_value
 
 USER_CODE_FILENAME = "<trace_user_code>"
 
 
-class _StepLimitExceeded(Exception):
-    """Raised to halt a runaway run once the step cap is hit."""
+class _StepLimitExceeded(BaseException):
+    """Raised to halt a runaway run once the step cap is hit.
+
+    BaseException on purpose: a plain Exception could be swallowed by user
+    code's `except Exception`, letting the run spin untraced until the wall
+    timeout. Only `except BaseException` catches this, which is explicit.
+    """
+
+
+_real_import = builtins.__import__
+
+
+def _guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+    top = name.split(".")[0]
+    if level != 0 or top not in SANDBOX_IMPORT_ALLOWLIST:
+        raise ImportError(f"import of {name!r} is not allowed in the Trace sandbox")
+    return _real_import(name, globals, locals, fromlist, level)
+
+
+def _restricted_builtins() -> dict:
+    """Builtins for sandboxed runs: no open(), imports limited to the allowlist."""
+    safe = {name: value for name, value in vars(builtins).items() if name != "open"}
+    safe["__import__"] = _guarded_import
+    return safe
 
 
 def _stack_names(frame: FrameType) -> list[str]:
@@ -47,10 +76,15 @@ def _stack_names(frame: FrameType) -> list[str]:
     return names
 
 
-def trace_python(source: str, room_id: str = "LOCAL", max_steps: int = MAX_TRACE_STEPS) -> Trace:
+def trace_python(
+    source: str, room_id: str = "LOCAL", max_steps: int = MAX_TRACE_STEPS, restricted: bool = False
+) -> Trace:
     """Trace Python source and return a schema-v1 Trace.
 
     In-process by design; the caller is responsible for sandboxing.
+    With restricted=True the code runs with sandboxed builtins (no open(),
+    imports limited to the allowlist). The sandbox driver always passes
+    restricted=True; the API process must never run untrusted code at all.
     """
     source_lines = source.splitlines()
     try:
@@ -99,6 +133,8 @@ def trace_python(source: str, room_id: str = "LOCAL", max_steps: int = MAX_TRACE
     status = "ok"
     error: str | None = None
     namespace: dict[str, Any] = {"__name__": "__main__"}
+    if restricted:
+        namespace["__builtins__"] = _restricted_builtins()
     old_trace = sys.gettrace()
     sys.settrace(tracer)
     try:
