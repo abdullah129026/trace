@@ -35,6 +35,9 @@ MAX_STACK_FRAMES = 64
 # interface in rooms.py is the upgrade path to Redis/Postgres.
 TRACE_STORE_CAP = 64
 
+# Rooms kept in memory (oldest evicted first). Same v1 simplification.
+ROOM_STORE_CAP = 256
+
 # Room code format: 6 chars, unambiguous alphabet (no 0/O, 1/I/l).
 ROOM_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 ROOM_CODE_LENGTH = 6
@@ -85,3 +88,6 @@ SANDBOX_IMPORT_ALLOWLIST = frozenset(
 # /execute rate limit: requests per IP per sliding window (seconds).
 RATE_LIMIT_EXECUTE_PER_MINUTE = 20
 RATE_LIMIT_WINDOW_SECONDS = 60
+
+# /rooms creation rate limit: creations per IP per sliding window (seconds).
+RATE_LIMIT_ROOM_CREATE_PER_MINUTE = 30
