@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pycrdt.websocket import ASGIServer, WebsocketServer
 from pydantic import BaseModel, field_validator
@@ -35,6 +36,18 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Trace API", version=__version__, lifespan=lifespan)
+
+# The frontend is served from a different origin (Vercel) than the API
+# (Render), so the browser needs CORS. The API is public by design in v1:
+# rooms are joined by code, there are no accounts, and /execute is
+# rate-limited per IP. No credentials are used, so a wildcard origin is
+# the honest v1 setting.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 async def yjs_relay_app(scope, receive, send):
