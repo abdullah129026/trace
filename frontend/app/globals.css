@@ -1,14 +1,40 @@
 @import "tailwindcss";
 
-/* Design tokens land on Day 4 with the visualizer. This file holds the
-   Tailwind import and the two typefaces until then. */
+/* Trace design tokens (Phase 1/2 of the build prompt): a debugger console
+   drawn like a good notebook. Paper-white surfaces, deep slate text, one
+   terminal-emerald accent reserved for the playhead, the current step, and
+   primary actions. Inter for UI, JetBrains Mono for code. No gradients,
+   no glassmorphism. */
+
+@theme {
+  --color-paper: #fafaf9;
+  --color-ink: #1c1917;
+  --color-ink-soft: #57534e;
+  --color-ink-faint: #a8a29e;
+  --color-line: #e7e5e4;
+  --color-accent: #047857;
+  --color-accent-soft: #ecfdf5;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+}
 
 body {
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
 code,
 pre,
 .font-mono {
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-family: var(--font-mono);
+}
+
+/* Remote collaborator selections painted by y-codemirror.next. The caret
+   carries the user's color inline; the wash stays faint so code stays
+   readable underneath. */
+.cm-ySelection {
+  opacity: 0.28;
 }
