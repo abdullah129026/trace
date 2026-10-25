@@ -7,12 +7,12 @@ import {
   API_BASE,
   CURSOR_COLORS,
   Language,
-  TracePayload,
   fetchRoom,
-  fetchTraceSummary,
+  fetchTrace,
   getDisplayName,
   wsBase,
 } from "./room";
+import type { FullTrace } from "./trace";
 
 export interface Member {
   clientId: number;
@@ -56,14 +56,14 @@ export function useRoom(code: string) {
 
   const [runState, setRunState] = useState<"idle" | "running">("idle");
   const [runError, setRunError] = useState<string | null>(null);
-  const [trace, setTrace] = useState<TracePayload | null>(null);
+  const [trace, setTrace] = useState<FullTrace | null>(null);
   const seenTraceIds = useRef(new Set<string>());
 
   const loadTrace = useCallback(async (traceId: string) => {
     if (seenTraceIds.current.has(traceId)) return;
     seenTraceIds.current.add(traceId);
     try {
-      setTrace(await fetchTraceSummary(traceId));
+      setTrace(await fetchTrace(traceId));
     } catch {
       // A trace id we cannot load is not worth breaking the room over;
       // the next run replaces it.
@@ -181,15 +181,8 @@ export function useRoom(code: string) {
         return;
       }
       seenTraceIds.current.add(body.trace_id);
-      setTrace({
-        trace_id: body.trace_id,
-        summary: {
-          language: body.trace.language,
-          status: body.trace.result.status,
-          steps_captured: body.trace.result.steps_captured,
-          truncated: body.trace.result.truncated,
-        },
-      });
+      // POST /execute already returns the full trace; no second fetch.
+      setTrace(body.trace as FullTrace);
     } catch {
       setRunError("Could not reach the API. Check your connection and try again.");
     } finally {

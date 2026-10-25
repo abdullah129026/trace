@@ -1,5 +1,7 @@
 /** Shared room constants, API helpers, and small utilities. */
 
+import type { FullTrace } from "./trace";
+
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -81,20 +83,11 @@ export async function fetchRoom(code: string): Promise<RoomInfo> {
   return body as RoomInfo;
 }
 
-export async function fetchTraceSummary(traceId: string): Promise<TracePayload> {
+export async function fetchTrace(traceId: string): Promise<FullTrace> {
   const res = await fetch(`${API_BASE}/traces/${traceId}`);
   const body = await res.json();
   if (!res.ok) throw new Error(body?.error?.message ?? "Could not load the trace.");
-  const t = body;
-  return {
-    trace_id: traceId,
-    summary: {
-      language: t.language,
-      status: t.result.status,
-      steps_captured: t.result.steps_captured,
-      truncated: t.result.truncated,
-    },
-  };
+  return body as FullTrace;
 }
 
 export function inviteLink(code: string): string {

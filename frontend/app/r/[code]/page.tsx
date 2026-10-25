@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { CollabEditor } from "../../../components/CollabEditor";
+import { TraceVisualizer } from "../../../components/TraceVisualizer";
 import { useRoom } from "../../../lib/useRoom";
 import {
   LANGUAGES,
@@ -10,13 +11,6 @@ import {
   ROOM_CODE_RE,
   inviteLink,
 } from "../../../lib/room";
-
-function StatusWord({ status }: { status: string }) {
-  if (status === "ok") return <span className="text-accent">Finished</span>;
-  if (status === "truncated")
-    return <span className="text-amber-700">Finished, truncated</span>;
-  return <span className="text-red-700">Finished with an error</span>;
-}
 
 export default function RoomPage({ params }: { params: Promise<{ code: string }> }) {
   const { code: rawCode } = use(params);
@@ -183,36 +177,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
           <section className="rounded-xl border border-line bg-white p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
-              Latest run
-            </h2>
-            {!trace ? (
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-                No runs yet. Press Run and the trace lands here for everyone in
-                the room.
-              </p>
-            ) : (
-              <div className="mt-3 space-y-2 text-sm">
-                <p className="font-medium">
-                  <StatusWord status={trace.summary.status} />
-                </p>
-                <p className="font-mono text-xs text-ink-soft">
-                  {trace.summary.steps_captured} steps · {trace.summary.language}
-                </p>
-                {trace.summary.truncated && (
-                  <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                    The trace stopped at the step cap instead of dropping steps
-                    silently. The cap is one edit in the backend config.
-                  </p>
-                )}
-              </div>
-            )}
-            <p className="mt-4 border-t border-line pt-3 text-xs text-ink-faint">
-              The step-by-step visualizer lands on Day 4.
-            </p>
-          </section>
-
-          <section className="rounded-xl border border-line bg-white p-5">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
               In this room
             </h2>
             <ul className="mt-3 space-y-2">
@@ -235,6 +199,22 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           </section>
         </aside>
       </main>
+
+      <div className="mx-auto w-full max-w-6xl px-6 pb-10">
+        {trace ? (
+          <TraceVisualizer trace={trace} />
+        ) : (
+          <section className="rounded-xl border border-line bg-white p-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+              Trace
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+              No runs yet. Press Run and the trace visualizer lands here for
+              everyone in the room.
+            </p>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
