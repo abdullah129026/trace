@@ -17,8 +17,8 @@ from pycrdt.websocket import ASGIServer, WebsocketServer
 from pydantic import BaseModel, field_validator
 from starlette.concurrency import run_in_threadpool
 
-from . import __version__, rate_limit, room_events, rooms, store
-from .config import MAX_SOURCE_BYTES, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, SUPPORTED_LANGUAGES
+from . import __version__, copilot, rate_limit, room_events, rooms, store
+from .config import MAX_QUESTION_CHARS, MAX_SOURCE_BYTES, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, SUPPORTED_LANGUAGES
 from .sandbox import SandboxError, run_trace
 
 log = logging.getLogger("trace.api")
@@ -132,6 +132,81 @@ class ExecuteRequest(BaseModel):
     @classmethod
     def room_id_well_formed(cls, value: str) -> str:
         return _validate_room_code(value, "room_id")
+
+
+class CopilotRequest(BaseModel):
+    trace_id: str
+    step_index: int
+    question: str | None = None
+
+    @field_validator("question")
+    @classmethod
+    def question_bounded(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            return None
+        if len(value) > MAX_QUESTION_CHARS:
+            raise ValueError(f"question exceeds {MAX_QUESTION_CHARS} character cap")
+        return value
+
+
+class AskRequest(CopilotRequest):
+    question: str
+
+    @field_validator("question")
+    @classmethod
+    def question_required(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("question must not be empty")
+        if len(value) > MAX_QUESTION_CHARS:
+            raise ValueError(f"question exceeds {MAX_QUESTION_CHARS} character cap")
+        return value
+
+
+async def _explain(body: CopilotRequest, request: Request) -> dict:
+    trace = store.load_trace(body.trace_id)
+    if trace is None:
+        return error_response(404, "not_found", f"no trace with id {body.trace_id!r}")
+    if body.step_index < 0 or body.step_index >= len(trace.steps):
+        return error_response(400, "validation_error", f"step_index {body.step_index} out of range")
+    client_ip = request.client.host if request.client else "unknown"
+    if not rate_limit.check_copilot_rate_limit(client_ip):
+        return error_response(429, "rate_limited", "too many co-pilot requests; slow down and try again")
+    try:
+        # The model call blocks; keep it off the event loop.
+        explanation = await run_in_threadpool(
+            copilot.explain_step, trace, body.step_index, body.question
+        )
+    except ValueError as exc:
+        return error_response(400, "validation_error", f"invalid request: {exc}")
+    except copilot.CopilotTimeout:
+        return error_response(504, "copilot_timeout", "the co-pilot did not answer in time; try again")
+    except copilot.CopilotUnavailable:
+        return error_response(
+            503, "copilot_unavailable", "the co-pilot is not available right now; try again later"
+        )
+    # Log counts only: never the question, the trace, or the explanation.
+    log.info("explained trace=%s step=%d", body.trace_id, body.step_index)
+    step = trace.steps[body.step_index]
+    return {
+        "trace_id": body.trace_id,
+        "step_index": body.step_index,
+        "line": step.line,
+        "explanation": explanation,
+    }
+
+
+@app.post("/explain")
+async def explain(body: CopilotRequest, request: Request) -> dict:
+    return await _explain(body, request)
+
+
+@app.post("/ask")
+async def ask(body: AskRequest, request: Request) -> dict:
+    return await _explain(body, request)
 
 
 @app.get("/health")
