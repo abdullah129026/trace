@@ -12,6 +12,7 @@ from . import config
 
 _hits: dict[str, deque[float]] = {}
 _room_hits: dict[str, deque[float]] = {}
+_copilot_hits: dict[str, deque[float]] = {}
 
 
 def _check(ip: str, limit: int, buckets: dict[str, deque[float]]) -> bool:
@@ -37,7 +38,13 @@ def check_room_create_rate_limit(ip: str) -> bool:
     return _check(ip, config.RATE_LIMIT_ROOM_CREATE_PER_MINUTE, _room_hits)
 
 
+def check_copilot_rate_limit(ip: str) -> bool:
+    """Record a co-pilot (/explain, /ask) hit for ip. Returns True when allowed."""
+    return _check(ip, config.RATE_LIMIT_COPILOT_PER_MINUTE, _copilot_hits)
+
+
 def reset_rate_limiter() -> None:
     """Test helper: clear all buckets."""
     _hits.clear()
     _room_hits.clear()
+    _copilot_hits.clear()

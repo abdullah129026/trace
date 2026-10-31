@@ -91,3 +91,13 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 
 # /rooms creation rate limit: creations per IP per sliding window (seconds).
 RATE_LIMIT_ROOM_CREATE_PER_MINUTE = 30
+
+# Co-pilot (/explain, /ask) rate limit: requests per IP per sliding window.
+# The co-pilot costs a model call, so it gets its own bucket, not the
+# execution bucket.
+RATE_LIMIT_COPILOT_PER_MINUTE = 20
+
+# AI co-pilot: model answer budget (seconds) and question size cap. Past
+# the timeout the API answers with a graceful timeout error, not a hang.
+COPILOT_TIMEOUT_SECONDS = 5
+MAX_QUESTION_CHARS = 1_000
