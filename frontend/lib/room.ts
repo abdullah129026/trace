@@ -90,6 +90,47 @@ export async function fetchTrace(traceId: string): Promise<FullTrace> {
   return body as FullTrace;
 }
 
+export interface CopilotAnswer {
+  trace_id: string;
+  step_index: number;
+  line: number;
+  explanation: string;
+}
+
+async function copilotQuery(
+  path: string,
+  traceId: string,
+  stepIndex: number,
+  question?: string,
+): Promise<CopilotAnswer> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(
+      question === undefined
+        ? { trace_id: traceId, step_index: stepIndex }
+        : { trace_id: traceId, step_index: stepIndex, question },
+    ),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.error?.message ?? "The co-pilot could not answer.");
+  return body as CopilotAnswer;
+}
+
+/** Explain one step of a stored trace, using only that trace. */
+export function explainStep(traceId: string, stepIndex: number): Promise<CopilotAnswer> {
+  return copilotQuery("/explain", traceId, stepIndex);
+}
+
+/** Ask a question about one step of a stored trace. */
+export function askTrace(
+  traceId: string,
+  stepIndex: number,
+  question: string,
+): Promise<CopilotAnswer> {
+  return copilotQuery("/ask", traceId, stepIndex, question);
+}
+
 export function inviteLink(code: string): string {
   return `${window.location.origin}/r/${code}`;
 }

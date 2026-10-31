@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CopilotPanel } from "./CopilotPanel";
 import {
   FullTrace,
   clampStep,
@@ -14,7 +15,13 @@ const SPEEDS = [0.5, 1, 2, 4];
 /** Execution visualizer: graph, source line, variables, stack, stdout,
  *  and the timeline scrubber along the bottom. Every number and value
  *  comes from the fetched trace; values render as text, never HTML. */
-export function TraceVisualizer({ trace }: { trace: FullTrace }) {
+export function TraceVisualizer({
+  trace,
+  traceId,
+}: {
+  trace: FullTrace;
+  traceId: string | null;
+}) {
   const steps = trace.steps;
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -294,6 +301,8 @@ export function TraceVisualizer({ trace }: { trace: FullTrace }) {
           Click the timeline to focus it, then step with the arrow keys.
         </p>
       </div>
+
+      <CopilotPanel trace={trace} traceId={traceId} stepIndex={step} />
     </section>
   );
 }

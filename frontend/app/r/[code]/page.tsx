@@ -30,6 +30,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     runState,
     runError,
     trace,
+    traceId,
   } = useRoom(valid ? code : "------");
 
   const [copied, setCopied] = useState(false);
@@ -202,7 +203,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
       <div className="mx-auto w-full max-w-6xl px-6 pb-10">
         {trace ? (
-          <TraceVisualizer trace={trace} />
+          <TraceVisualizer trace={trace} traceId={traceId} />
         ) : (
           <section className="rounded-xl border border-line bg-white p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">

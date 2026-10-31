@@ -57,6 +57,7 @@ export function useRoom(code: string) {
   const [runState, setRunState] = useState<"idle" | "running">("idle");
   const [runError, setRunError] = useState<string | null>(null);
   const [trace, setTrace] = useState<FullTrace | null>(null);
+  const [traceId, setTraceId] = useState<string | null>(null);
   const seenTraceIds = useRef(new Set<string>());
 
   const loadTrace = useCallback(async (traceId: string) => {
@@ -64,6 +65,7 @@ export function useRoom(code: string) {
     seenTraceIds.current.add(traceId);
     try {
       setTrace(await fetchTrace(traceId));
+      setTraceId(traceId);
     } catch {
       // A trace id we cannot load is not worth breaking the room over;
       // the next run replaces it.
@@ -183,6 +185,7 @@ export function useRoom(code: string) {
       seenTraceIds.current.add(body.trace_id);
       // POST /execute already returns the full trace; no second fetch.
       setTrace(body.trace as FullTrace);
+      setTraceId(body.trace_id as string);
     } catch {
       setRunError("Could not reach the API. Check your connection and try again.");
     } finally {
@@ -207,5 +210,6 @@ export function useRoom(code: string) {
     runState,
     runError,
     trace,
+    traceId,
   };
 }
