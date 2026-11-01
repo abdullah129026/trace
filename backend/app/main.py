@@ -5,6 +5,7 @@ ASGI app at /yjs/{code}; the room event socket at /rooms/{code}/events
 carries member join/leave and finished-trace broadcasts.
 """
 
+import asyncio
 import logging
 import re
 from contextlib import asynccontextmanager
@@ -28,6 +29,9 @@ ROOM_CODE_RE = re.compile(f"^[{ROOM_CODE_ALPHABET}]{{{ROOM_CODE_LENGTH}}}$")
 _yjs_server = WebsocketServer()
 _yjs_asgi = ASGIServer(_yjs_server)
 
+# Serializes room join/leave sequences (see room_events_socket).
+_join_lock = asyncio.Lock()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,6 +52,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 async def yjs_relay_app(scope, receive, send):
@@ -246,15 +251,19 @@ async def room_events_socket(websocket: WebSocket, code: str):
         await websocket.close(code=4404)
         return
     await websocket.accept()
-    members = room_events.subscribe(code, websocket)
-    await websocket.send_json(
-        {
-            "type": "hello",
-            "members": members,
-            "last_trace_id": rooms.get(code).last_trace_id if rooms.get(code) else None,
-        }
-    )
-    await room_events.broadcast(code, {"type": "member_joined", "members": members}, exclude=websocket)
+    # Join and leave are serialized: without this, two members joining at
+    # once can see each other's member_joined before their own hello, and
+    # a client that assumes hello-first misreads the member count.
+    async with _join_lock:
+        members = room_events.subscribe(code, websocket)
+        await websocket.send_json(
+            {
+                "type": "hello",
+                "members": members,
+                "last_trace_id": rooms.get(code).last_trace_id if rooms.get(code) else None,
+            }
+        )
+        await room_events.broadcast(code, {"type": "member_joined", "members": members}, exclude=websocket)
     try:
         while True:
             # The socket is server-push only in v1; we read to notice the
@@ -263,8 +272,9 @@ async def room_events_socket(websocket: WebSocket, code: str):
     except WebSocketDisconnect:
         pass
     finally:
-        members = room_events.unsubscribe(code, websocket)
-        await room_events.broadcast(code, {"type": "member_left", "members": members}, exclude=websocket)
+        async with _join_lock:
+            members = room_events.unsubscribe(code, websocket)
+            await room_events.broadcast(code, {"type": "member_left", "members": members}, exclude=websocket)
 
 
 @app.post("/execute")

@@ -110,6 +110,18 @@ def test_event_socket_broadcasts_join_and_leave():
             assert left == {"type": "member_left", "members": 1}
 
 
+def test_simultaneous_join_still_greets_each_member_first():
+    # Found by the Day 6 two-session check: two members joining at once
+    # could see member_joined overtake hello on the first socket. Hello
+    # must stay first for both, whatever the join order.
+    with TestClient(app) as client:
+        code = make_room(client)
+        with client.websocket_connect(f"/rooms/{code}/events") as ws1:
+            with client.websocket_connect(f"/rooms/{code}/events") as ws2:
+                assert ws1.receive_json()["type"] == "hello"
+                assert ws2.receive_json()["type"] == "hello"
+
+
 def test_event_socket_to_unknown_room_is_refused():
     with TestClient(app) as client:
         with pytest.raises(WebSocketDisconnect):
