@@ -1,0 +1,22 @@
+# Render Blueprint for the Trace backend. In the Render dashboard:
+# New > Blueprint, pick this repo. The service builds backend/Dockerfile,
+# which already includes the Node runtime the JavaScript sandbox needs.
+# Set GROQ_API_KEY in the dashboard afterwards (sync: false below means
+# Render asks for it instead of reading a value from this file). Until
+# it is set, the co-pilot answers 503 and the rest of the app works.
+# The frontend (Vercel) then points NEXT_PUBLIC_API_URL at this URL.
+
+services:
+  - type: web
+    name: trace-api
+    env: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
