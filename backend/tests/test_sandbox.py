@@ -120,3 +120,15 @@ def test_audit_hook_blocks_dangerous_events_when_armed():
         driver._audit_hook("import", ())
     finally:
         driver._hook_armed = False
+
+
+def test_driver_crash_error_never_carries_driver_stderr(tmp_path, monkeypatch):
+    # A crashing driver prints to stderr; if that text reached the API
+    # error or the server log, user source lines could leak with it.
+    driver = tmp_path / "crash.js"
+    driver.write_text('console.error("SENTINEL_USER_SOURCE"); process.exit(1);\n')
+    monkeypatch.setattr("app.sandbox.JS_DRIVER", driver)
+    with pytest.raises(SandboxError) as excinfo:
+        run_trace("x = 1\n", "javascript", room_id="LOCAL")
+    assert "SENTINEL_USER_SOURCE" not in str(excinfo.value)
+    assert "exited with code 1" in str(excinfo.value)

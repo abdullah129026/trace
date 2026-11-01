@@ -150,7 +150,9 @@ def run_trace(
                 return _killed_trace(
                     source, language, room_id, f"execution killed by {sig}: sandbox resource limit exceeded"
                 )
-            raise SandboxError(f"sandbox driver exited with code {proc.returncode}: {err.decode('utf-8', 'replace')[:500]}")
+            # No stderr in the message: a driver crash traceback can quote
+            # user source lines, and user code is never logged or returned.
+            raise SandboxError(f"sandbox driver exited with code {proc.returncode}")
 
         try:
             return Trace.model_validate_json(out)
