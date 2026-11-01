@@ -98,3 +98,9 @@ def test_rate_limiter_allows_under_limit():
 
 def test_health_still_ok():
     assert client.get("/health").json() == {"status": "ok"}
+
+
+def test_api_responses_carry_nosniff_header():
+    resp = client.get("/health")
+    assert resp.status_code == 200
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"

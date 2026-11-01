@@ -54,6 +54,15 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    # One header, the one that matters for a JSON API: stop browsers
+    # sniffing a trace payload as something executable. No auth, no
+    # cookies, so there is nothing else worth faking here.
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
 
 async def yjs_relay_app(scope, receive, send):
     """Raw ASGI mount for the Yjs sync protocol.
