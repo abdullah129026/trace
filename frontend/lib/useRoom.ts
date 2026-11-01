@@ -7,6 +7,7 @@ import {
   API_BASE,
   CURSOR_COLORS,
   Language,
+  fetchJson,
   fetchRoom,
   fetchTrace,
   getDisplayName,
@@ -172,12 +173,11 @@ export function useRoom(code: string) {
     setRunState("running");
     setRunError(null);
     try {
-      const res = await fetch(`${API_BASE}/execute`, {
+      const { res, body } = await fetchJson(`${API_BASE}/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, language, room_id: code }),
       });
-      const body = await res.json();
       if (!res.ok) {
         setRunError(body?.error?.message ?? "The run failed. Try again.");
         return;
@@ -186,8 +186,12 @@ export function useRoom(code: string) {
       // POST /execute already returns the full trace; no second fetch.
       setTrace(body.trace as FullTrace);
       setTraceId(body.trace_id as string);
-    } catch {
-      setRunError("Could not reach the API. Check your connection and try again.");
+    } catch (err) {
+      setRunError(
+        err instanceof Error
+          ? err.message
+          : "Could not reach the API. Check your connection and try again.",
+      );
     } finally {
       setRunState("idle");
     }

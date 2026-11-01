@@ -69,23 +69,54 @@ export function wsBase(): string {
   return API_BASE.replace(/^http/, "ws");
 }
 
+/**
+ * Fetch JSON from the API, riding out a free-tier cold start. While the
+ * backend sleeps, the host serves an HTML wake-up page instead of JSON,
+ * so a non-JSON body (or a failed request) means "not awake yet": wait
+ * and retry for a bit before giving up.
+ * # ponytail: fixed 3s interval, ~75s ceiling. Add backoff or a status
+ * poll only if real wake times prove longer than that.
+ */
+export async function fetchJson(
+  url: string,
+  init?: RequestInit,
+): Promise<{ res: Response; body: any }> {
+  const deadline = Date.now() + 75_000;
+  for (;;) {
+    try {
+      const res = await fetch(url, init);
+      const text = await res.text();
+      try {
+        return { res, body: JSON.parse(text) };
+      } catch {
+        // HTML wake-up page or a proxy error page, not our API yet.
+      }
+    } catch {
+      // Network error while the backend is still coming up.
+    }
+    if (Date.now() >= deadline) {
+      throw new Error(
+        "The backend did not respond. It may still be waking up, give it a few seconds and try again.",
+      );
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+}
+
 export async function createRoom(): Promise<string> {
-  const res = await fetch(`${API_BASE}/rooms`, { method: "POST" });
-  const body = await res.json();
+  const { res, body } = await fetchJson(`${API_BASE}/rooms`, { method: "POST" });
   if (!res.ok) throw new Error(body?.error?.message ?? "Could not create a room.");
   return body.code as string;
 }
 
 export async function fetchRoom(code: string): Promise<RoomInfo> {
-  const res = await fetch(`${API_BASE}/rooms/${code}`);
-  const body = await res.json();
+  const { res, body } = await fetchJson(`${API_BASE}/rooms/${code}`);
   if (!res.ok) throw new Error(body?.error?.message ?? "Could not load the room.");
   return body as RoomInfo;
 }
 
 export async function fetchTrace(traceId: string): Promise<FullTrace> {
-  const res = await fetch(`${API_BASE}/traces/${traceId}`);
-  const body = await res.json();
+  const { res, body } = await fetchJson(`${API_BASE}/traces/${traceId}`);
   if (!res.ok) throw new Error(body?.error?.message ?? "Could not load the trace.");
   return body as FullTrace;
 }
@@ -103,7 +134,7 @@ async function copilotQuery(
   stepIndex: number,
   question?: string,
 ): Promise<CopilotAnswer> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const { res, body } = await fetchJson(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(
@@ -112,7 +143,6 @@ async function copilotQuery(
         : { trace_id: traceId, step_index: stepIndex, question },
     ),
   });
-  const body = await res.json();
   if (!res.ok) throw new Error(body?.error?.message ?? "The co-pilot could not answer.");
   return body as CopilotAnswer;
 }
