@@ -73,6 +73,15 @@ def snapshot_value(
             TRUNCATED_KEY: len(value) > preview_items or any(cut(v) for v in preview),
         }
 
+    if callable(value):
+        # repr() of a function carries a memory address, which changes on
+        # every run and clutters the variables panel. Name it instead.
+        # ponytail: classes and other callables get the same treatment;
+        # their constructor args are not shown, that is a v2 panel job.
+        name = getattr(value, "__name__", None)
+        label = f"<{type(value).__name__} {name}>" if name else f"<{type(value).__name__}>"
+        return {"type": type(value).__name__, "repr": label, TRUNCATED_KEY: False}
+
     text = repr(value)
     if len(text) > max_chars:
         return {"type": type(value).__name__, "repr": text[:max_chars], TRUNCATED_KEY: True}

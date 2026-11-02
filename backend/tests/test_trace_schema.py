@@ -105,6 +105,16 @@ def test_snapshot_long_string_is_truncated_with_marker():
     assert snap["type"] == "str"
 
 
+def test_snapshot_function_has_no_memory_address():
+    def fetch_user(user_id):
+        return None
+
+    snap = snapshot_value(fetch_user)
+    assert snap["repr"] == "<function fetch_user>"
+    assert "0x" not in snap["repr"]
+    assert snap["__trace_truncated__"] is False
+
+
 def test_snapshot_is_json_safe():
     import json
 
