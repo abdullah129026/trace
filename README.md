@@ -6,11 +6,11 @@ Paste a snippet, invite someone with a room code, and watch the code run togethe
 
 ## Layout
 
-- `backend/` — FastAPI service: execution API, Python tracer, JS tracer (Node subprocess), Yjs collaboration relay.
-- `frontend/` — Next.js (App Router) + TypeScript + Tailwind: room UI, execution graph, timeline scrubber, co-pilot panel.
-- `docs/adr/` — architecture decision records, 3-6 max.
+- `backend/`: FastAPI service with the execution API, Python tracer, JS tracer (Node subprocess), and Yjs collaboration relay.
+- `frontend/`: Next.js (App Router) + TypeScript + Tailwind room UI, execution graph, timeline scrubber, co-pilot panel.
+- `docs/adr/`: architecture decision records, 3-6 max.
 
-## Quickstart (dev)
+## Quickstart (dev, verified 2026-11-02)
 
 Backend:
 
@@ -66,7 +66,23 @@ wake-up wait.
 
 Rooms by shareable code, no accounts. Python and JavaScript tracing, sync code only. Traces are recorded, then scrubbed; no breakpoints or live step-through. The full binding list lives in `~/workspace/user/files/trace-build-prompt.md`, the sole source of truth for this build.
 
+## Live
+
+App: https://trace-swwy.vercel.app
+API: https://trace-api-0k5u.onrender.com
+
+Render free tier sleeps after inactivity, so the first visit can take
+half a minute to wake up. The frontend rides out the wake-up page
+instead of failing.
+
 ## Status
 
-Day 6 of a 7-day build: deploy configs, rate limits, and the security
-checklist pass are in. Day 7 (2026-11-02) is dogfooding and ship.
+Shipped 2026-11-02 (Day 7): three buggy snippets debugged through the
+finished product, a two-browser room verified end to end (collab edit,
+presence, shared run, zero console errors), 91/91 backend tests green,
+frontend production build green. Full story in `CASE_STUDY.md`, launch
+drafts in `docs/launch-notes.md`.
+
+One check is still open and is not claimed as done: two real people
+debugging together in a live room. The two-browser room passed locally
+in production mode; the live version of that test is the next step.
