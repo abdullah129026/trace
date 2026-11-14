@@ -75,7 +75,7 @@ export function TraceVisualizer({
 
   if (steps.length === 0) {
     return (
-      <section className="rounded-xl border border-line bg-white p-5">
+      <section className="rounded-xl border border-line bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
           Trace
         </h2>
@@ -99,7 +99,7 @@ export function TraceVisualizer({
       : null;
 
   return (
-    <section className="overflow-hidden rounded-xl border border-line bg-white">
+    <section className="overflow-hidden rounded-xl border border-line bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
           Trace
@@ -111,12 +111,12 @@ export function TraceVisualizer({
       </div>
 
       {changedNote && (
-        <p className="border-b border-line bg-red-50 px-5 py-3 text-sm text-red-700">
+        <p className="border-b border-line bg-error-soft px-5 py-3 text-sm text-error">
           {changedNote}
         </p>
       )}
       {trace.result.truncated && (
-        <p className="border-b border-line bg-amber-50 px-5 py-3 text-xs text-amber-800">
+        <p className="border-b border-line bg-warning-soft px-5 py-3 text-xs text-ink-soft">
           The trace stopped at the step cap instead of dropping steps silently.
           The cap is one edit in the backend config.
         </p>
@@ -140,14 +140,14 @@ export function TraceVisualizer({
             aria-label={`Execution graph with ${steps.length} steps`}
           >
             {path && (
-              <path d={path} fill="none" stroke="#d6d3d1" strokeWidth="1.5" />
+              <path d={path} fill="none" stroke="var(--color-line)" strokeWidth="1.5" />
             )}
             {currentPoint && (
               <circle
                 cx={currentPoint.x}
                 cy={currentPoint.y}
                 r="6"
-                fill="#047857"
+                fill="var(--color-accent)"
               />
             )}
           </svg>
@@ -255,7 +255,7 @@ export function TraceVisualizer({
           </button>
           <button
             onClick={() => setPlaying((p) => !p)}
-            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-on-accent transition-opacity hover:opacity-90"
           >
             {playing ? "Pause" : "Play"}
           </button>
@@ -294,7 +294,7 @@ export function TraceVisualizer({
             setPlaying(false);
             setStep(clampStep(Number(e.target.value), steps.length));
           }}
-          className="mt-3 w-full accent-[#047857]"
+          className="mt-3 w-full accent-[var(--color-accent)]"
           aria-label="Scrub through the trace"
         />
         <p className="mt-1 text-xs text-ink-faint">

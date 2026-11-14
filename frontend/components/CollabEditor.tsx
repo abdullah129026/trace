@@ -34,27 +34,27 @@ const editorTheme = EditorView.theme({
     fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
     fontSize: "13.5px",
     lineHeight: "1.7",
-    caretColor: "#047857",
+    caretColor: "var(--color-accent)",
     padding: "16px 0",
   },
   ".cm-line": {
     padding: "0 16px",
   },
   ".cm-activeLine": {
-    backgroundColor: "#f5f5f4",
+    backgroundColor: "var(--color-accent-soft)",
   },
   ".cm-activeLineGutter": {
     backgroundColor: "transparent",
   },
   ".cm-gutters": {
     backgroundColor: "transparent",
-    borderRight: "1px solid #e7e5e4",
-    color: "#a8a29e",
+    borderRight: "1px solid var(--color-line)",
+    color: "var(--color-ink-faint)",
     fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
     fontSize: "12px",
   },
   ".cm-selectionBackground": {
-    backgroundColor: "#d6f5e3 !important",
+    backgroundColor: "var(--color-accent-soft) !important",
   },
   "&.cm-focused": {
     outline: "none",
@@ -65,7 +65,7 @@ const editorTheme = EditorView.theme({
     marginLeft: "-1px",
   },
   ".cm-ySelectionInfo": {
-    fontFamily: "var(--font-inter), sans-serif",
+    fontFamily: "var(--font-family-body), sans-serif",
     fontSize: "11px",
     padding: "1px 6px",
     borderRadius: "4px",

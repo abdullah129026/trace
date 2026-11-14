@@ -77,7 +77,7 @@ export default function Home() {
         breaks. Python and JavaScript, in the browser.
       </p>
 
-      <form onSubmit={join} className="mt-10 rounded-xl border border-line bg-white p-5">
+      <form onSubmit={join} className="mt-10 rounded-xl border border-line bg-card p-5">
         <label htmlFor="room-code" className="text-sm font-medium">
           Join a room
         </label>
@@ -94,12 +94,12 @@ export default function Home() {
           <button
             type="submit"
             disabled={busy}
-            className="shrink-0 rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="shrink-0 rounded-lg bg-accent px-5 py-2.5 font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             Join
           </button>
         </div>
-        {joinError && <p className="mt-2 text-sm text-red-700">{joinError}</p>}
+        {joinError && <p className="mt-2 text-sm text-error">{joinError}</p>}
         <div className="mt-4 flex items-center gap-3 text-sm text-ink-faint">
           <span className="h-px flex-1 bg-line" />
           or

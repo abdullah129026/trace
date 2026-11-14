@@ -1,21 +1,32 @@
+@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
 @import "tailwindcss";
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
 
-/* Trace design tokens (Phase 1/2 of the build prompt): a debugger console
-   drawn like a good notebook. Paper-white surfaces, deep slate text, one
-   terminal-emerald accent reserved for the playhead, the current step, and
-   primary actions. Inter for UI, JetBrains Mono for code. No gradients,
-   no glassmorphism. */
+/* Trace design tokens, now the shared Astryx rollout theme
+   (workspace/user/files/astryx-rollout.md): light glassy green surfaces,
+   emerald accent only. The @theme values use light-dark() so the app
+   follows the Astryx Theme provider's color scheme; the Astryx reset sets
+   color-scheme on the root. The Astryx type system replaces Inter for UI
+   text (JetBrains Mono stays for code); the Inter load itself is removed
+   in step G. No gradients, no glassmorphism. */
 
 @theme {
-  --color-paper: #fafaf9;
-  --color-ink: #1c1917;
-  --color-ink-soft: #57534e;
-  --color-ink-faint: #a8a29e;
-  --color-line: #e7e5e4;
-  --color-accent: #047857;
-  --color-accent-soft: #ecfdf5;
+  --color-paper: light-dark(#f2f7f2, #0b100d);
+  --color-ink: light-dark(#131f18, #e8f1e9);
+  --color-ink-soft: light-dark(#50614e, #9db3a2);
+  --color-ink-faint: light-dark(#7e8f7e, #6e8271);
+  --color-line: light-dark(#d9e6d9, #243328);
+  --color-accent: light-dark(#047857, #34d399);
+  --color-accent-soft: light-dark(#d9f5e5, rgba(52, 211, 153, 0.14));
+  --color-card: light-dark(#ffffff, #121915);
+  --color-on-accent: light-dark(#ffffff, #052e1f);
+  --color-error: #dc2626;
+  --color-error-soft: light-dark(#fef2f2, rgba(220, 38, 38, 0.14));
+  --color-warning: #d97706;
+  --color-warning-soft: light-dark(#fffbeb, rgba(217, 119, 6, 0.14));
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-family-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 }
 

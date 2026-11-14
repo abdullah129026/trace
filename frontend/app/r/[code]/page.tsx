@@ -94,7 +94,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           <button
             onClick={copyInvite}
             title="Copy invite link"
-            className="rounded-md border border-line bg-white px-2.5 py-1 font-mono text-sm tracking-widest text-ink transition-colors hover:border-ink-faint"
+            className="rounded-md border border-line bg-card px-2.5 py-1 font-mono text-sm tracking-widest text-ink transition-colors hover:border-ink-faint"
           >
             {code}
           </button>
@@ -119,7 +119,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </div>
             <span className="flex items-center gap-1.5 text-sm text-ink-soft">
               <span
-                className={`h-2 w-2 rounded-full ${connected ? "bg-accent" : "bg-amber-500"}`}
+                className={`h-2 w-2 rounded-full ${connected ? "bg-accent" : "bg-warning-soft0"}`}
               />
               {connected ? "Live" : "Connecting"}
             </span>
@@ -128,7 +128,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       </header>
 
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-6 py-6 lg:grid-cols-[1fr_340px]">
-        <section className="overflow-hidden rounded-xl border border-line bg-white">
+        <section className="overflow-hidden rounded-xl border border-line bg-card">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
             <div className="flex items-center gap-1 rounded-lg bg-paper p-1" role="group" aria-label="Language (shared)">
               {LANGUAGES.map((l: Language) => (
@@ -137,7 +137,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
                   onClick={() => setLanguage(l)}
                   className={`rounded-md px-3 py-1 text-sm transition-colors ${
                     language === l
-                      ? "bg-white font-medium text-ink shadow-sm"
+                      ? "bg-card font-medium text-ink shadow-sm"
                       : "text-ink-soft hover:text-ink"
                   }`}
                 >
@@ -157,11 +157,11 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         </section>
 
         <aside className="flex flex-col gap-6">
-          <section className="rounded-xl border border-line bg-white p-5">
+          <section className="rounded-xl border border-line bg-card p-5">
             <button
               onClick={run}
               disabled={runState === "running"}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+              className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-on-accent transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
             >
               {runState === "running" ? "Running…" : "Run"}
             </button>
@@ -170,13 +170,13 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               receives the trace.
             </p>
             {runError && (
-              <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mt-3 rounded-lg bg-error-soft px-3 py-2 text-sm text-error">
                 {runError}
               </p>
             )}
           </section>
 
-          <section className="rounded-xl border border-line bg-white p-5">
+          <section className="rounded-xl border border-line bg-card p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
               In this room
             </h2>
@@ -205,7 +205,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         {trace ? (
           <TraceVisualizer trace={trace} traceId={traceId} />
         ) : (
-          <section className="rounded-xl border border-line bg-white p-5">
+          <section className="rounded-xl border border-line bg-card p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
               Trace
             </h2>

@@ -104,7 +104,7 @@ export function CopilotPanel({
           <button
             onClick={() => void runQuery(false)}
             disabled={busy}
-            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {busy ? "Asking…" : "Explain this step"}
           </button>
@@ -134,7 +134,7 @@ export function CopilotPanel({
       )}
 
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-3 rounded-lg bg-error-soft px-3 py-2 text-sm text-error">
           {error}
         </p>
       )}
@@ -152,7 +152,7 @@ export function CopilotPanel({
           {voiceSupported && (
             <button
               onClick={toggleVoice}
-              className="mt-2 rounded-md border border-line bg-white px-3 py-1 text-xs transition-colors hover:border-ink-faint"
+              className="mt-2 rounded-md border border-line bg-card px-3 py-1 text-xs transition-colors hover:border-ink-faint"
             >
               {speaking ? "Stop narration" : "Read it aloud"}
             </button>
