@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@astryxdesign/core/Button";
 import { CopilotPanel } from "./CopilotPanel";
 import {
   FullTrace,
@@ -246,39 +247,32 @@ export function TraceVisualizer({
         aria-label="Timeline scrubber. Use left and right arrow keys to step."
       >
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <Button
+            label="Prev step"
+            variant="secondary"
             onClick={() => go(-1)}
-            disabled={step <= 0}
-            className="rounded-lg border border-line px-3 py-1.5 text-sm transition-colors hover:border-ink-faint disabled:opacity-40"
-          >
-            Prev step
-          </button>
-          <button
+            isDisabled={step <= 0}
+          />
+          <Button
+            label={playing ? "Pause" : "Play"}
+            variant="primary"
             onClick={() => setPlaying((p) => !p)}
-            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-on-accent transition-opacity hover:opacity-90"
-          >
-            {playing ? "Pause" : "Play"}
-          </button>
-          <button
+          />
+          <Button
+            label="Next step"
+            variant="secondary"
             onClick={() => go(1)}
-            disabled={step >= steps.length - 1}
-            className="rounded-lg border border-line px-3 py-1.5 text-sm transition-colors hover:border-ink-faint disabled:opacity-40"
-          >
-            Next step
-          </button>
+            isDisabled={step >= steps.length - 1}
+          />
           <div className="flex items-center gap-1" role="group" aria-label="Playback speed">
             {SPEEDS.map((s) => (
-              <button
+              <Button
                 key={s}
+                label={`${s}x`}
+                size="sm"
+                variant={speed === s ? "secondary" : "ghost"}
                 onClick={() => setSpeed(s)}
-                className={`rounded-md px-2 py-1 font-mono text-xs ${
-                  speed === s
-                    ? "bg-accent-soft font-medium text-accent"
-                    : "text-ink-soft hover:text-ink"
-                }`}
-              >
-                {s}x
-              </button>
+              />
             ))}
           </div>
           <p className="ml-auto font-mono text-xs text-ink-soft">

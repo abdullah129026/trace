@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@astryxdesign/core/Button";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { ROOM_CODE_RE, createRoom } from "../lib/room";
 
 const STEPS = [
@@ -78,26 +80,29 @@ export default function Home() {
       </p>
 
       <form onSubmit={join} className="mt-10 rounded-xl border border-line bg-card p-5">
-        <label htmlFor="room-code" className="text-sm font-medium">
-          Join a room
-        </label>
+        <p className="text-sm font-medium">Join a room</p>
         <div className="mt-2 flex gap-2">
-          <input
-            id="room-code"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
-            placeholder="KQ4M9Z"
-            autoComplete="off"
-            spellCheck={false}
-            className="w-full rounded-lg border border-line bg-paper px-4 py-2.5 font-mono text-lg tracking-[0.2em] outline-none placeholder:text-ink-faint focus:border-accent"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="shrink-0 rounded-lg bg-accent px-5 py-2.5 font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            Join
-          </button>
+          <div className="w-full">
+            <TextInput
+              id="room-code"
+              label="Room code"
+              isLabelHidden
+              value={code}
+              onChange={(value) =>
+                setCode(value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))
+              }
+              placeholder="KQ4M9Z"
+              autoComplete="off"
+            />
+          </div>
+          <div className="shrink-0">
+            <Button
+              type="submit"
+              label="Join"
+              variant="primary"
+              isDisabled={busy}
+            />
+          </div>
         </div>
         {joinError && <p className="mt-2 text-sm text-error">{joinError}</p>}
         <div className="mt-4 flex items-center gap-3 text-sm text-ink-faint">
@@ -105,14 +110,15 @@ export default function Home() {
           or
           <span className="h-px flex-1 bg-line" />
         </div>
-        <button
-          type="button"
-          onClick={create}
-          disabled={busy}
-          className="mt-4 w-full rounded-lg border border-line px-4 py-2.5 font-medium text-ink transition-colors hover:border-ink-faint disabled:opacity-60"
-        >
-          Create a room
-        </button>
+        <div className="mt-4">
+          <Button
+            label="Create a room"
+            variant="secondary"
+            width="100%"
+            onClick={create}
+            isDisabled={busy}
+          />
+        </div>
       </form>
 
       <section className="mt-14">

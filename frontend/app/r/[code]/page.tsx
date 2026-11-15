@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { Button } from "@astryxdesign/core/Button";
 import { CollabEditor } from "../../../components/CollabEditor";
 import { TraceVisualizer } from "../../../components/TraceVisualizer";
 import { useRoom } from "../../../lib/useRoom";
@@ -91,13 +92,13 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           <Link href="/" className="text-lg font-semibold tracking-tight">
             Trace
           </Link>
-          <button
+          <Button
+            label={code}
+            size="sm"
+            variant="secondary"
+            tooltip="Copy invite link"
             onClick={copyInvite}
-            title="Copy invite link"
-            className="rounded-md border border-line bg-card px-2.5 py-1 font-mono text-sm tracking-widest text-ink transition-colors hover:border-ink-faint"
-          >
-            {code}
-          </button>
+          />
           <span className="hidden text-xs text-ink-faint sm:inline">
             {copied ? "Invite link copied" : "Click the code to copy the invite link"}
           </span>
@@ -130,19 +131,15 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-6 py-6 lg:grid-cols-[1fr_340px]">
         <section className="overflow-hidden rounded-xl border border-line bg-card">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-            <div className="flex items-center gap-1 rounded-lg bg-paper p-1" role="group" aria-label="Language (shared)">
+            <div className="flex items-center gap-1" role="group" aria-label="Language (shared)">
               {LANGUAGES.map((l: Language) => (
-                <button
+                <Button
                   key={l}
+                  label={l === "python" ? "Python" : "JavaScript"}
+                  size="sm"
+                  variant={language === l ? "secondary" : "ghost"}
                   onClick={() => setLanguage(l)}
-                  className={`rounded-md px-3 py-1 text-sm transition-colors ${
-                    language === l
-                      ? "bg-card font-medium text-ink shadow-sm"
-                      : "text-ink-soft hover:text-ink"
-                  }`}
-                >
-                  {l === "python" ? "Python" : "JavaScript"}
-                </button>
+                />
               ))}
             </div>
             <span className="text-xs text-ink-faint">shared with the room</span>
@@ -158,13 +155,13 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
         <aside className="flex flex-col gap-6">
           <section className="rounded-xl border border-line bg-card p-5">
-            <button
+            <Button
+              label={runState === "running" ? "Running…" : "Run"}
+              variant="primary"
+              width="100%"
               onClick={run}
-              disabled={runState === "running"}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-on-accent transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-            >
-              {runState === "running" ? "Running…" : "Run"}
-            </button>
+              isDisabled={runState === "running"}
+            />
             <p className="mt-3 text-xs leading-relaxed text-ink-faint">
               Runs the shared editor code in the sandbox. Everyone in the room
               receives the trace.

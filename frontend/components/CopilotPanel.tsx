@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { askTrace, explainStep } from "../lib/room";
 import type { FullTrace } from "../lib/trace";
 
@@ -101,13 +103,14 @@ export function CopilotPanel({
         </p>
       ) : (
         <>
-          <button
-            onClick={() => void runQuery(false)}
-            disabled={busy}
-            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {busy ? "Asking…" : "Explain this step"}
-          </button>
+          <div className="mt-3">
+            <Button
+              label={busy ? "Asking…" : "Explain this step"}
+              variant="primary"
+              onClick={() => void runQuery(false)}
+              isDisabled={busy}
+            />
+          </div>
           <form
             className="mt-3 flex gap-2"
             onSubmit={(e) => {
@@ -115,20 +118,24 @@ export function CopilotPanel({
               if (question.trim()) void runQuery(true);
             }}
           >
-            <input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ask about this step, for example why is this None?"
-              aria-label="Ask the trace a question"
-              className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm outline-none placeholder:text-ink-faint focus:border-accent"
-            />
-            <button
-              type="submit"
-              disabled={busy || !question.trim()}
-              className="shrink-0 rounded-lg border border-line px-4 py-2 text-sm transition-colors hover:border-ink-faint disabled:opacity-40"
-            >
-              Ask
-            </button>
+            <div className="w-full">
+              <TextInput
+                label="Ask the trace a question"
+                isLabelHidden
+                value={question}
+                onChange={(value) => setQuestion(value)}
+                placeholder="Ask about this step, for example why is this None?"
+                aria-label="Ask the trace a question"
+              />
+            </div>
+            <div className="shrink-0">
+              <Button
+                type="submit"
+                label="Ask"
+                variant="secondary"
+                isDisabled={busy || !question.trim()}
+              />
+            </div>
           </form>
         </>
       )}
@@ -150,12 +157,14 @@ export function CopilotPanel({
         <div className="mt-3 rounded-lg bg-paper px-4 py-3">
           <p className="text-sm leading-relaxed text-ink">{explanation}</p>
           {voiceSupported && (
-            <button
-              onClick={toggleVoice}
-              className="mt-2 rounded-md border border-line bg-card px-3 py-1 text-xs transition-colors hover:border-ink-faint"
-            >
-              {speaking ? "Stop narration" : "Read it aloud"}
-            </button>
+            <div className="mt-2">
+              <Button
+                label={speaking ? "Stop narration" : "Read it aloud"}
+                variant="secondary"
+                size="sm"
+                onClick={toggleVoice}
+              />
+            </div>
           )}
         </div>
       )}
