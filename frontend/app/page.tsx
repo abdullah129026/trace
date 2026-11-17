@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@astryxdesign/core/Button";
 import { TextInput } from "@astryxdesign/core/TextInput";
+import { CommandPaletteMenu, useCommandPaletteHotkey } from "../components/CommandPaletteMenu";
+import type { PaletteCommand } from "../components/CommandPaletteMenu";
 import { ROOM_CODE_RE, createRoom } from "../lib/room";
 
 const STEPS = [
@@ -29,6 +31,31 @@ export default function Home() {
   const [code, setCode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useCommandPaletteHotkey(() => setPaletteOpen(true));
+
+  const commands = useMemo<PaletteCommand[]>(
+    () => [
+      {
+        id: "create-room",
+        label: "Create a room",
+        group: "Rooms",
+        keywords: ["create", "new"],
+        run: () => void create(),
+      },
+      {
+        id: "join-room",
+        label: "Join a room",
+        group: "Rooms",
+        keywords: ["join", "code"],
+        run: () => document.getElementById("room-code")?.focus(),
+      },
+    ],
+    // create is re-created each render but only calls the stable router
+    // and setState; the palette rebuilds when it opens regardless.
+    [paletteOpen],
+  );
 
   const join = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,6 +147,15 @@ export default function Home() {
           />
         </div>
       </form>
+
+      <p className="mt-3 text-center text-xs text-ink-faint">
+        Press ⌘K for commands.
+      </p>
+      <CommandPaletteMenu
+        isOpen={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        commands={commands}
+      />
 
       <section className="mt-14">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">

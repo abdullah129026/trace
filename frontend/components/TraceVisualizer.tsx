@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@astryxdesign/core/Button";
+import { CommandPaletteMenu, useCommandPaletteHotkey } from "./CommandPaletteMenu";
+import type { PaletteCommand } from "./CommandPaletteMenu";
 import { CopilotPanel } from "./CopilotPanel";
+import type { CopilotActions } from "./CopilotPanel";
 import {
   FullTrace,
   clampStep,
@@ -19,15 +22,115 @@ const SPEEDS = [0.5, 1, 2, 4];
 export function TraceVisualizer({
   trace,
   traceId,
+  onCopyInvite,
 }: {
   trace: FullTrace;
   traceId: string | null;
+  onCopyInvite?: () => void;
 }) {
   const steps = trace.steps;
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const copilotActionsRef = useRef<CopilotActions | null>(null);
+
+  useCommandPaletteHotkey(() => setPaletteOpen(true));
+
+  // The palette lists the actions that already exist on this screen:
+  // playback, co-pilot, and the room invite. Rebuilt when the palette
+  // opens so labels (Play/Pause, voice) match the current state.
+  const commands = useMemo<PaletteCommand[]>(() => {
+    const list: PaletteCommand[] = [
+      {
+        id: "play-pause",
+        label: playing ? "Pause playback" : "Play the trace",
+        group: "Playback",
+        keywords: ["play", "pause"],
+        run: () => setPlaying((p) => !p),
+      },
+      {
+        id: "step-back",
+        label: "Step back",
+        group: "Playback",
+        keywords: ["previous"],
+        run: () => go(-1),
+      },
+      {
+        id: "step-forward",
+        label: "Step forward",
+        group: "Playback",
+        keywords: ["next"],
+        run: () => go(1),
+      },
+      {
+        id: "first-step",
+        label: "Go to first step",
+        group: "Playback",
+        keywords: ["start", "beginning"],
+        run: () => go(-steps.length),
+      },
+      {
+        id: "last-step",
+        label: "Go to last step",
+        group: "Playback",
+        keywords: ["end"],
+        run: () => go(steps.length),
+      },
+      ...SPEEDS.map(
+        (s): PaletteCommand => ({
+          id: `speed-${s}`,
+          label: `Playback speed ${s}x`,
+          group: "Playback",
+          keywords: ["speed", "faster", "slower"],
+          run: () => setSpeed(s),
+        }),
+      ),
+      {
+        id: "explain",
+        label: "Explain this step",
+        group: "Co-pilot",
+        keywords: ["explain", "what"],
+        run: () => copilotActionsRef.current?.explain(),
+      },
+      {
+        id: "ask",
+        label: "Ask the co-pilot a question",
+        group: "Co-pilot",
+        keywords: ["ask", "question"],
+        run: () => copilotActionsRef.current?.focusAsk(),
+      },
+    ];
+    if (copilotActionsRef.current?.hasExplanation()) {
+      list.push({
+        id: "voice",
+        label: copilotActionsRef.current.isSpeaking()
+          ? "Stop narration"
+          : "Read the explanation aloud",
+        group: "Co-pilot",
+        keywords: ["voice", "read", "speak", "narrate"],
+        run: () => copilotActionsRef.current?.toggleVoice(),
+      });
+    }
+    if (onCopyInvite) {
+      list.push({
+        id: "copy-invite",
+        label: "Copy invite link",
+        group: "Room",
+        keywords: ["invite", "share", "link", "copy"],
+        run: onCopyInvite,
+      });
+    }
+    return list;
+    // paletteOpen in deps: the list is rebuilt when the palette opens,
+    // so Play/Pause and voice labels match the state at open time.
+  }, [playing, step, speed, steps.length, paletteOpen, onCopyInvite]);
+
+  const go = (delta: number) => {
+    setPlaying(false);
+    setStep((s) => clampStep(s + delta, steps.length));
+  };
 
   // A new trace resets the playhead to the first step.
   useEffect(() => {
@@ -58,11 +161,6 @@ export function TraceVisualizer({
   );
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
   const currentPoint = current ? points[clampStep(step, steps.length)] : null;
-
-  const go = (delta: number) => {
-    setPlaying(false);
-    setStep((s) => clampStep(s + delta, steps.length));
-  };
 
   const onScrubberKey = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowRight") {
@@ -105,10 +203,18 @@ export function TraceVisualizer({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
           Trace
         </h2>
-        <p className="font-mono text-xs text-ink-soft">
-          {steps.length} steps · {trace.language}
-          {trace.result.truncated ? " · stopped at the step cap" : ""}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="font-mono text-xs text-ink-soft">
+            {steps.length} steps · {trace.language}
+            {trace.result.truncated ? " · stopped at the step cap" : ""}
+          </p>
+          <Button
+            label="Commands ⌘K"
+            size="sm"
+            variant="ghost"
+            onClick={() => setPaletteOpen(true)}
+          />
+        </div>
       </div>
 
       {changedNote && (
@@ -293,10 +399,21 @@ export function TraceVisualizer({
         />
         <p className="mt-1 text-xs text-ink-faint">
           Click the timeline to focus it, then step with the arrow keys.
+          Press ⌘K for commands.
         </p>
       </div>
 
-      <CopilotPanel trace={trace} traceId={traceId} stepIndex={step} />
+      <CopilotPanel
+        trace={trace}
+        traceId={traceId}
+        stepIndex={step}
+        actionsRef={copilotActionsRef}
+      />
+      <CommandPaletteMenu
+        isOpen={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        commands={commands}
+      />
     </section>
   );
 }

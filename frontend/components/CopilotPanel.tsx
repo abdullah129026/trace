@@ -6,6 +6,16 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { askTrace, explainStep } from "../lib/room";
 import type { FullTrace } from "../lib/trace";
 
+/** Actions the command palette drives. Assigned by the panel on every
+ *  render so the palette always calls the current closures. */
+export interface CopilotActions {
+  explain: () => void;
+  focusAsk: () => void;
+  toggleVoice: () => void;
+  hasExplanation: () => boolean;
+  isSpeaking: () => boolean;
+}
+
 /** AI co-pilot panel, pinned to the visualizer's selected step. The
  *  explanation always names the step it explains; when the playhead
  *  moves on, the panel says so instead of pretending the old answer
@@ -15,10 +25,12 @@ export function CopilotPanel({
   trace,
   traceId,
   stepIndex,
+  actionsRef,
 }: {
   trace: FullTrace;
   traceId: string | null;
   stepIndex: number;
+  actionsRef?: React.RefObject<CopilotActions | null>;
 }) {
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explainedStep, setExplainedStep] = useState<number | null>(null);
@@ -27,6 +39,7 @@ export function CopilotPanel({
   const [error, setError] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const askInputRef = useRef<HTMLInputElement | null>(null);
 
   const step = trace.steps[stepIndex];
   const voiceSupported =
@@ -83,6 +96,21 @@ export function CopilotPanel({
     setSpeaking(true);
   };
 
+  // The visualizer's command palette calls these; re-assign after every
+  // render so the closures always see the current explanation and step.
+  useEffect(() => {
+    if (!actionsRef) return;
+    actionsRef.current = {
+      explain: () => void runQuery(false),
+      // The palette closes after running a command and its dialog hands
+      // focus back to the page; wait a tick so this focus lands after that.
+      focusAsk: () => setTimeout(() => askInputRef.current?.focus(), 0),
+      toggleVoice,
+      hasExplanation: () => explanation !== null,
+      isSpeaking: () => speaking,
+    };
+  });
+
   const stale = explainedStep !== null && explainedStep !== stepIndex;
 
   return (
@@ -122,6 +150,7 @@ export function CopilotPanel({
               <TextInput
                 label="Ask the trace a question"
                 isLabelHidden
+                ref={askInputRef}
                 value={question}
                 onChange={(value) => setQuestion(value)}
                 placeholder="Ask about this step, for example why is this None?"
