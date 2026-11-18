@@ -8,8 +8,11 @@
    emerald accent only. The @theme values use light-dark() so the app
    follows the Astryx Theme provider's color scheme; the Astryx reset sets
    color-scheme on the root. The Astryx type system replaces Inter for UI
-   text (JetBrains Mono stays for code); the Inter load itself is removed
-   in step G. No gradients, no glassmorphism. */
+   text (JetBrains Mono stays for code); the Inter load was removed in
+   step G, the Astryx type system is the only UI font. No gradients,
+   no glassmorphism: step F found no floating layer over real content
+   (the co-pilot panel sits in normal flow, the palette is Astryx's own
+   overlay), so the glass pass is a skip, not a sweep. */
 
 @theme {
   --color-paper: light-dark(#f2f7f2, #0b100d);
