@@ -10,6 +10,7 @@ no test asserts anything a stubbed model did not actually return.
 import json
 import os
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -218,3 +219,106 @@ def test_seeded_bug_step_is_the_none_assignment():
     assert bug_steps[0]["locals"]["user"] is None
     # The failing line really does index that same variable.
     assert 'user["name"]' in stored["source_lines"][3]
+
+
+class _StubResponse:
+    """Minimal httpx.Response stand-in: only what _call_groq touches."""
+
+    def __init__(self, payload=None, status_error=None):
+        self._payload = payload
+        self._status_error = status_error
+
+    def raise_for_status(self):
+        if self._status_error is not None:
+            raise self._status_error
+
+    def json(self):
+        return self._payload
+
+
+def _groq_reply(content):
+    return {"choices": [{"message": {"role": "assistant", "content": content}}]}
+
+
+def _fake_post(monkeypatch, response=None, error=None):
+    seen = {}
+
+    def fake_post(url, **kwargs):
+        seen["url"] = url
+        seen.update(kwargs)
+        if error is not None:
+            raise error
+        return response
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    return seen
+
+
+def test_call_groq_success_returns_provider_text(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    seen = _fake_post(
+        monkeypatch, response=_StubResponse(_groq_reply("Step 2 (line 3): user is None here."))
+    )
+    text = copilot._call_groq([{"role": "user", "content": "explain step 2"}])
+    assert text == "Step 2 (line 3): user is None here."
+    assert seen["url"] == copilot.GROQ_API_URL
+    assert seen["headers"]["Authorization"] == "Bearer test-key"
+    assert seen["json"]["model"] == copilot.DEFAULT_MODEL
+
+
+def test_call_groq_timeout_is_copilot_timeout(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    request = httpx.Request("POST", copilot.GROQ_API_URL)
+    _fake_post(
+        monkeypatch,
+        error=httpx.TimeoutException("timed out", request=request),
+    )
+    with pytest.raises(copilot.CopilotTimeout):
+        copilot._call_groq([{"role": "user", "content": "explain step 2"}])
+
+
+def test_call_groq_http_error_is_unavailable(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    request = httpx.Request("POST", copilot.GROQ_API_URL)
+    response = httpx.Response(500, request=request)
+    _fake_post(
+        monkeypatch,
+        response=_StubResponse(
+            _groq_reply("never returned"),
+            status_error=httpx.HTTPStatusError(
+                "500 Internal Server Error", request=request, response=response
+            ),
+        ),
+    )
+    with pytest.raises(copilot.CopilotUnavailable):
+        copilot._call_groq([{"role": "user", "content": "explain step 2"}])
+
+
+def test_call_groq_empty_choices_is_unavailable(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    _fake_post(monkeypatch, response=_StubResponse({"choices": []}))
+    with pytest.raises(copilot.CopilotUnavailable):
+        copilot._call_groq([{"role": "user", "content": "explain step 2"}])
+
+
+def test_call_groq_missing_choices_is_unavailable(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    _fake_post(monkeypatch, response=_StubResponse({"error": "no choices here"}))
+    with pytest.raises(copilot.CopilotUnavailable):
+        copilot._call_groq([{"role": "user", "content": "explain step 2"}])
+
+
+def test_call_groq_empty_content_is_unavailable(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    _fake_post(monkeypatch, response=_StubResponse(_groq_reply("   ")))
+    with pytest.raises(copilot.CopilotUnavailable):
+        copilot._call_groq([{"role": "user", "content": "explain step 2"}])
+
+
+def test_explain_keeps_model_text_that_already_cites_step_and_line():
+    result = copilot.explain_step(
+        make_trace(),
+        3,
+        call_model=lambda messages: "Step 3 (line 4): user is None here.",
+    )
+    assert result == "Step 3 (line 4): user is None here."
