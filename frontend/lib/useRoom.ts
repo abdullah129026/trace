@@ -7,6 +7,7 @@ import {
   API_BASE,
   CURSOR_COLORS,
   Language,
+  ROOM_CODE_RE,
   fetchJson,
   fetchRoom,
   fetchTrace,
@@ -75,6 +76,9 @@ export function useRoom(code: string) {
 
   // Editing relay + presence + shared language.
   useEffect(() => {
+    // An invalid code never reaches a room: the page renders the
+    // invalid-code screen instead, so open no connections for it.
+    if (!ROOM_CODE_RE.test(code)) return;
     const provider = new WebsocketProvider(`${wsBase()}/yjs`, code, doc);
     const name = getDisplayName();
     const color = CURSOR_COLORS[provider.awareness.clientID % CURSOR_COLORS.length];
@@ -145,7 +149,8 @@ export function useRoom(code: string) {
     };
 
     // Check the room first so a bad code shows "not found" instead of a
-    // forever-reconnecting socket.
+    // forever-reconnecting socket. Invalid codes open nothing at all.
+    if (!ROOM_CODE_RE.test(code)) return;
     fetchRoom(code)
       .then(() => connect())
       .catch(() => setRoomMissing(true));

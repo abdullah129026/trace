@@ -32,7 +32,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     runError,
     trace,
     traceId,
-  } = useRoom(valid ? code : "------");
+  } = useRoom(code);
 
   const [copied, setCopied] = useState(false);
 
